@@ -1,0 +1,30 @@
+version: "3"
+services:
+    log:
+        image: p2pviewer
+        networks:
+            - chord
+    bootnode:
+        image: chord
+        networks:
+            - chord
+        ports:
+            - 8090:8090/udp
+        depends_on:
+            - log
+        command: bash -c "python /app/chord/chord/chordnode.py -b `ip -4 addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}'`:8090 -s log:8089 -l 2"
+    nodes:
+        image: chord
+        ports:
+            - 8091:8091/udp
+        networks:
+            - chord
+        deploy:
+            replicas: 1
+        depends_on:
+            - log
+            - bootnode
+        command: bash -c "python /app/chord/chord/chordnode.py -b `ip -4 addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}'`:8091 -p bootnode:8090 -s log:8089 -l 2"
+networks:
+    chord:
+
